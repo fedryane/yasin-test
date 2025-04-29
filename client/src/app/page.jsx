@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { createGuest } from "@/lib/api";
+import { createGuest } from "../lib/api";
 
 export default function HomePage() {
   const [nama, setNama] = useState("");

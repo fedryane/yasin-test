@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { loginAdmin, setToken, getToken, removeToken } from "@/lib/api";
+import { loginAdmin, setToken, getToken, removeToken } from "../../lib/api";
 import { useRouter } from "next/navigation";
 
 export default function AdminLoginPage() {

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { getToken, removeToken, getAllGuest, getAllPayments } from "@/lib/api";
+import { getToken, removeToken, getAllGuest, getAllPayments } from "../../../lib/api"; // Adjust the import path as needed
 
 const formatDateTime = (dateString) => {
   const date = new Date(dateString);

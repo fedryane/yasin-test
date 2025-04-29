@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { createPayment } from "@/lib/api";
+import { createPayment } from "../../lib/api";
 import { useRouter } from "next/navigation";
 
 export default function PaymentPage() {

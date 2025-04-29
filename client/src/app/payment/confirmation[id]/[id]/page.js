@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { getPaymentById } from "@/lib/api";
+import { getPaymentById } from "../../../../lib/api"; // Adjust the import path as needed
 import Link from "next/link";
 import { format } from "path";
 
