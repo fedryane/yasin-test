@@ -135,7 +135,7 @@ const app = express();
 app.use(
   cors({
     // IMPORTANT FOR DEPLOYMENT: Use environment variable for production origin
-    origin: process.env.CORS_ORIGIN || "https://yasin-test-client.vercel.app",
+    origin: process.env.CORS_ORIGIN || "https://yasin-test-client.vercel.app" || "http://localhost:3000",
     credentials: true,
   })
 );
