@@ -1,14 +1,28 @@
-const db = require('../config/db');
+import mongoose from "mongoose";
 
-const Guest = {
-    create: (nama, pesan, callback) => {
-        const sql = `INSERT INTO guests (nama, pesan) VALUES (?, ?)`;
-        db.run(sql, [nama, pesan], callback);
+const guestSchema = new mongoose.Schema(
+  {
+    nama: {
+      type: String,
+      required: [true, "Nama is required"],
+      trim: true,
     },
-    getAll: (callback) => {
-        const sql = `SELECT * FROM guests ORDER BY timestamp DESC`;
-        db.all(sql, [], callback);
-    }
-};
+    pesan: {
+      type: String,
+      required: [true, "Pesan is required"],
+      trim: true,
+    },
+    // Timestamps option below is preferred over manual timestamp field
+    // timestamp: {
+    //     type: Date,
+    //     default: Date.now
+    // }
+  },
+  {
+    timestamps: { createdAt: "timestamp" }, // Use createdAt as 'timestamp', updatedAt will also be added
+  }
+);
 
-module.exports = Guest;
+const Guest = mongoose.model("Guest", guestSchema);
+
+export default Guest;

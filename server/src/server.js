@@ -3,118 +3,164 @@
 // import dotenv from "dotenv";
 // import path from "path";
 // import { fileURLToPath } from "url";
+// import mongoose from "mongoose"; // Import mongoose for event listeners
 
-// import { initializeDatabase } from "./models/db.js";
+// // Import the new DB connection function
+// import connectDB from "./config/db.js"; // Correct path to config
+
+// // Import routes
 // import guestRoutes from "./routes/guestRoutes.js";
 // import authRoutes from "./routes/authRoutes.js";
 // import paymentRoutes from "./routes/paymentRoutes.js";
 
+// // --- Environment Setup ---
 // const __filename = fileURLToPath(import.meta.url);
 // const __dirname = path.dirname(__filename);
+
+// // Load .env from the root directory (relative to src/server.js)
+// // dotenv is likely already loaded by db.js, but loading again is safe
 // dotenv.config({ path: path.resolve(__dirname, "../.env") });
 
+// // --- Connect to Database ---
+// // Call the function exported from db.js to establish MongoDB connection
+// connectDB();
+
+// // --- Express App Setup ---
 // const app = express();
-// const PORT = process.env.PORT || 5001;
+// const PORT = process.env.PORT || 5001; // Default to 5001 if PORT not in .env
 
-// initializeDatabase()
-//   .then(() => {
-//     app.use(
-//       cors({
-//         origin: "http://localhost:3000",
-//         credentials: true,
-//       })
-//     );
-
-//     app.use(express.json());
-//     app.use(express.urlencoded({ extended: true }));
-
-//     // API Routes
-//     app.use("/api/guests", guestRoutes);
-//     app.use("/api/auth", authRoutes);
-//     app.use("/api/payments", paymentRoutes);
-
-//     app.get("/", (req, res) => {
-//       res.send("Welcome to the Guest Book API!");
-//     });
-
-//     app.listen(PORT, () => {
-//       console.log(`Backend server running on http://localhost:${PORT}`);
-//     });
+// // --- Middleware ---
+// // CORS configuration
+// app.use(
+//   cors({
+//     // Best practice: Use an environment variable for the origin
+//     origin: process.env.CORS_ORIGIN || "http://localhost:3000",
+//     credentials: true, // Allow cookies/authorization headers
 //   })
-//   .catch((err) => {
-//     console.error("Failed to initialize database:", err);
-//     process.exit(1);
+// );
+
+// // Body Parsing Middleware (built into Express)
+// app.use(express.json()); // Parses incoming requests with JSON payloads
+// app.use(express.urlencoded({ extended: true })); // Parses incoming requests with URL-encoded payloads
+
+// // --- API Routes ---
+// app.use("/api/auth", authRoutes);
+// app.use("/api/guests", guestRoutes);
+// app.use("/api/payments", paymentRoutes);
+
+// // --- Root Route ---
+// app.get("/", (req, res) => {
+//   res.send("Welcome to the Guest Book API (MongoDB Version)!");
+// });
+
+// // --- Error Handling Middleware (Optional but Recommended) ---
+// // Place after all routes
+// app.use((err, req, res, next) => {
+//   console.error("Unhandled Error:", err.stack);
+//   res.status(err.status || 500).json({
+//     message: err.message || "An unexpected server error occurred.",
+//     // Optionally include stack trace in development
+//     // stack: process.env.NODE_ENV === 'development' ? err.stack : undefined
 //   });
+// });
+
+// // --- Start Server ---
+// // Mongoose handles connection buffering, so usually okay to start immediately.
+// // The connectDB function handles critical connection errors on startup.
+// const server = app.listen(PORT, () => {
+//   console.log(`Backend server running on http://localhost:${PORT}`);
+// });
+
+// // --- Handle Mongoose Connection Events After Initial Connection ---
+// mongoose.connection.on("error", (err) => {
+//   console.error("Mongoose runtime connection error:", err);
+//   // Consider more robust error handling depending on the error type
+// });
+
+// mongoose.connection.on("disconnected", () => {
+//   console.warn("Mongoose disconnected.");
+//   // You might want to implement reconnection logic here if needed
+// });
+
+// // --- Graceful Shutdown ---
+// process.on("SIGINT", async () => {
+//   console.log("SIGINT received. Closing HTTP server and MongoDB connection...");
+//   server.close(async () => {
+//     // Close HTTP server first
+//     console.log("HTTP server closed.");
+//     await mongoose.connection.close(false); // Close MongoDB connection
+//     console.log("MongoDB connection closed.");
+//     process.exit(0); // Exit gracefully
+//   });
+// });
+
+// process.on("SIGTERM", async () => {
+//   console.log("SIGTERM received. Closing HTTP server and MongoDB connection...");
+//   server.close(async () => {
+//     console.log("HTTP server closed.");
+//     await mongoose.connection.close(false);
+//     console.log("MongoDB connection closed.");
+//     process.exit(0);
+//   });
+// });
+
+// READY TO DEPLOY TO VERCEL
+
+// server/src/server.js
 
 import express from "express";
 import cors from "cors";
-// import dotenv from "dotenv"; // Remove or conditionalize dotenv for production
+import dotenv from "dotenv";
 import path from "path";
 import { fileURLToPath } from "url";
+import mongoose from "mongoose";
 
-import { initializeDatabase } from "./models/db.js";
+import connectDB from "./config/db.js";
 import guestRoutes from "./routes/guestRoutes.js";
 import authRoutes from "./routes/authRoutes.js";
 import paymentRoutes from "./routes/paymentRoutes.js";
 
-// const __filename = fileURLToPath(import.meta.url); // Not strictly needed if not using __dirname
-// const __dirname = path.dirname(__filename);
-// dotenv.config({ path: path.resolve(__dirname, "../.env") }); // Remove or conditionalize this line
+// --- Environment Setup ---
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+dotenv.config({ path: path.resolve(__dirname, "../../.env") }); // Load .env from root
 
+// --- Connect to Database ---
+connectDB(); // Establish MongoDB connection on startup
+
+// --- Express App Setup ---
 const app = express();
-// Vercel sets the PORT environment variable automatically, you don't need to read it here for app.listen
-// const PORT = process.env.PORT || 5001; // We won't use app.listen
-
-// --- Database Initialization ---
-// We initialize the database, but we don't necessarily need to wait
-// for it before exporting the app. Route handlers or middleware that
-// depend on the DB should ensure the connection is ready (often handled
-// by the DB client/ORM's connection pooling).
-initializeDatabase()
-  .then(() => {
-    console.log("Database initialized successfully.");
-    // You could potentially set up DB-dependent routes *here* if needed,
-    // but the simpler approach below is often sufficient if your DB client handles pooling.
-  })
-  .catch((err) => {
-    console.error("Failed to initialize database:", err);
-    // Consider how to handle requests if the DB fails to initialize.
-    // Maybe a health check endpoint could reflect this status.
-    // process.exit(1); // Don't exit in serverless environment
-  });
 
 // --- Middleware ---
 app.use(
   cors({
-    // Use environment variable for production origin, fallback for local
+    // IMPORTANT FOR DEPLOYMENT: Use environment variable for production origin
     origin: process.env.CORS_ORIGIN || "http://localhost:3000",
     credentials: true,
   })
 );
-
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // --- API Routes ---
-// These routes should ideally work even if the initial DB connection
-// promise hasn't resolved yet, assuming your DB client handles queuing
-// or pooling connections gracefully.
-app.use("/api/guests", guestRoutes);
+// Ensure ALL your routes are defined here
 app.use("/api/auth", authRoutes);
+app.use("/api/guests", guestRoutes);
 app.use("/api/payments", paymentRoutes);
 
-// --- Basic Route ---
-app.get("/", (req, res) => {
-  res.send("Welcome to the Guest Book API!");
+// --- Optional Root API Route (Good for health checks) ---
+app.get("/api", (req, res) => {
+  res.send("Welcome to the Guest Book API (Running on Vercel)!");
 });
 
-// --- Vercel Export ---
-// REMOVE the app.listen block:
+// --- IMPORTANT: Export the app for Vercel ---
+// --- REMOVE or COMMENT OUT app.listen() ---
 /*
-app.listen(PORT, () => {
+const PORT = process.env.PORT || 5001;
+const server = app.listen(PORT, () => {
   console.log(`Backend server running on http://localhost:${PORT}`);
 });
+// ... (remove server setup and graceful shutdown related to app.listen)
 */
 
-// EXPORT the Express app instance for Vercel
-export default app;
+export default app; // Export the configured Express app

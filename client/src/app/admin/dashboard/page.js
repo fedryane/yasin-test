@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { getToken, removeToken, getAllGuest } from "@/lib/api";
+import { getToken, removeToken, getAllGuest, getAllPayments } from "@/lib/api";
 import Link from "next/link";
 
 const formatDateTime = (dateString) => {
@@ -16,9 +16,21 @@ const formatDateTime = (dateString) => {
   });
 };
 
+export const capitalizeFirstLetter = (string) => {
+  return string.charAt(0).toUpperCase() + string.slice(1);
+};
+
+const formatCurrency = (amount) => {
+  return new Intl.NumberFormat("id-ID", {
+    style: "currency",
+    currency: "IDR",
+  }).format(amount);
+};
+
 export default function AdminDashboardPage() {
   const router = useRouter();
   const [guests, setGuests] = useState([]);
+  const [payments, setPayments] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -29,6 +41,7 @@ export default function AdminDashboardPage() {
       router.push("/admin");
     } else {
       fetchGuests();
+      fetchPayments();
     }
   }, [router]);
 
@@ -45,6 +58,22 @@ export default function AdminDashboardPage() {
     } catch (error) {
       console.error(error);
       setError(error.message || "Terjadi kesalahan saat mengambil data tamu.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const fetchPayments = async () => {
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const response = await getAllPayments();
+      console.log(response);
+      setPayments(response || []);
+    } catch (error) {
+      console.error(error);
+      setError(error.message || "Terjadi kesalahan saat mengambil data pembayaran.");
     } finally {
       setIsLoading(false);
     }
@@ -75,6 +104,7 @@ export default function AdminDashboardPage() {
 
       {!isLoading && !error && (
         <div className="overflow-x-auto">
+          {/* Table for guest data */}
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
@@ -93,10 +123,46 @@ export default function AdminDashboardPage() {
                 </tr>
               ) : (
                 guests.map((guest, index) => (
-                  <tr key={guest.id}>
+                  <tr key={guest._id}>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{index + 1}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{guest.nama}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{guest.pesan}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{formatDateTime(guest.timestamp)}</td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+
+          <h2 className="text-lg font-medium text-gray-700 mb-4 mt-20">Table Pembayaran</h2>
+
+          {/* Table for payments */}
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">No</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nama</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nomor Telepon</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Jumlah Pembayaran</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Metode Pembayaran</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tanggal Pembayaran</th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {payments.length === 0 ? (
+                <tr className="text-center">
+                  <td colSpan={4} className="px-6 py-4 text-center text-sm text-gray-500">
+                    Tidak ada data tamu
+                  </td>
+                </tr>
+              ) : (
+                payments.map((guest, index) => (
+                  <tr key={guest._id}>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{index + 1}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{guest.nama_lengkap}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{guest.nomor_telepon}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{formatCurrency(guest.jumlah_pembayaran)}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{capitalizeFirstLetter(guest.metode_pembayaran)}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{formatDateTime(guest.timestamp)}</td>
                   </tr>
                 ))

@@ -52,10 +52,9 @@ export default function PaymentPage() {
     try {
       const response = await createPayment(formData);
       setSuccess("Berhasil menambahkan data pembayaran");
-      console.log("Response data:", response.paymentId);
+      console.log("Response data:", response.payment._id);
 
-      router.push(`/payment/confirmation/${response.paymentId}`);
-      
+      router.push(`/payment/confirmation/${response.payment._id}`);
     } catch (error) {
       setError("Gagal atau error pada server");
       setIsSubmitting(false);

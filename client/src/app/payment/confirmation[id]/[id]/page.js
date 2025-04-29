@@ -27,6 +27,9 @@ const formatDateTime = (dateString) => {
 export default function PaymentConfirmationPage() {
   const router = useRouter();
   const { id } = useParams();
+
+  console.log(`Payment ID: ${id}`);
+
   const [payment, setPayment] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
